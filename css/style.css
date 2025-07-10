@@ -1,0 +1,155 @@
+/* General layout */
+body {
+  margin: 0;
+  font-family: 'Inter', sans-serif;
+  background-color: #f4f6fa;
+  color: #1e1e1e;
+}
+
+/* Landing page container */
+.container {
+  max-width: 640px;
+  margin: 80px auto;
+  text-align: center;
+  padding: 30px;
+  background: white;
+  border-radius: 16px;
+  box-shadow: 0 15px 35px rgba(0, 0, 0, 0.05);
+}
+
+h1 {
+  font-size: 2rem;
+  margin-bottom: 12px;
+  color: #2d60ff;
+}
+
+p {
+  font-size: 1rem;
+  color: #5f6c7b;
+  margin-bottom: 32px;
+}
+
+/* Buttons */
+.btn {
+  display: inline-block;
+  text-decoration: none;
+  background: #2d60ff;
+  color: white;
+  padding: 14px 28px;
+  border-radius: 8px;
+  font-weight: 600;
+  margin: 8px;
+  transition: background 0.3s ease;
+}
+
+.btn:hover {
+  background: #244edf;
+}
+
+.btn.secondary {
+  background: #f0f4ff;
+  color: #2d60ff;
+}
+
+.btn.secondary:hover {
+  background: #d9e5ff;
+}
+
+/* Upload Card */
+.upload-card {
+  max-width: 520px;
+  margin: 60px auto;
+  background: white;
+  border-radius: 16px;
+  padding: 40px;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.08);
+  text-align: center;
+}
+
+.upload-box {
+  margin-top: 20px;
+  border: 2px dashed #cbd5e1;
+  padding: 30px;
+  border-radius: 12px;
+  background: #f9fafb;
+  cursor: pointer;
+  transition: 0.2s;
+}
+
+.upload-box:hover {
+  background: #eef4ff;
+}
+
+.upload-box input {
+  display: none;
+}
+
+.filename {
+  margin-top: 10px;
+  font-size: 0.9rem;
+  color: #2d60ff;
+}
+
+/* Chart + Table */
+.analysis-box {
+  max-width: 960px;
+  margin: 60px auto;
+  background: white;
+  border-radius: 16px;
+  padding: 40px;
+  box-shadow: 0 10px 35px rgba(0, 0, 0, 0.06);
+  text-align: center;
+}
+
+.chart-container {
+  max-width: 400px;
+  margin: 0 auto 30px;
+}
+
+table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-bottom: 20px;
+}
+
+th, td {
+  padding: 12px;
+  border: 1px solid #e5e7eb;
+  font-size: 0.95rem;
+  text-align: center;
+}
+
+th {
+  background-color: #eff6ff;
+  font-weight: 600;
+}
+
+td.positive {
+  color: green;
+  font-weight: 600;
+}
+
+td.negative {
+  color: red;
+  font-weight: 600;
+}
+
+.download-btn {
+  background: #2d60ff;
+  color: white;
+  padding: 12px 24px;
+  border: none;
+  border-radius: 8px;
+  font-size: 1rem;
+  cursor: pointer;
+}
+
+.download-btn:hover {
+  background: #244edf;
+}
+
+.error-msg {
+  color: red;
+  font-size: 0.95rem;
+  margin-top: 20px;
+}

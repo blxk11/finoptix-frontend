@@ -1,0 +1,112 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Portfolio Analysis – Finoptix</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600&display=swap" rel="stylesheet"/>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+  <div class="analysis-box">
+    <h1>Your Portfolio Performance</h1>
+
+    <div class="chart-container">
+      <canvas id="pieChart"></canvas>
+    </div>
+
+    <table id="resultTable" style="display:none;">
+      <thead>
+        <tr>
+          <th>Stock Name</th>
+          <th>Quantity</th>
+          <th>Buy Price</th>
+          <th>Current Price</th>
+          <th>Gain (%)</th>
+        </tr>
+      </thead>
+      <tbody id="tableBody"></tbody>
+    </table>
+
+    <button class="download-btn" onclick="downloadCSV()" id="downloadBtn" style="display:none;">Download CSV</button>
+    <div class="error-msg" id="errorMsg"></div>
+  </div>
+
+  <script>
+    const raw = localStorage.getItem("portfolioData");
+    const tableBody = document.getElementById("tableBody");
+    const resultTable = document.getElementById("resultTable");
+    const downloadBtn = document.getElementById("downloadBtn");
+    const errorMsg = document.getElementById("errorMsg");
+
+    if (!raw) {
+      errorMsg.innerHTML = `No data found. <a href="portfolio.html">Upload portfolio again</a>`;
+    } else {
+      try {
+        const data = JSON.parse(raw);
+        if (!Array.isArray(data) || data.length === 0) throw new Error();
+
+        resultTable.style.display = "table";
+        downloadBtn.style.display = "inline-block";
+
+        data.forEach(row => {
+          const gain = parseFloat(row["Gain (%)"]);
+          const gainClass = gain >= 0 ? "positive" : "negative";
+
+          const tr = document.createElement("tr");
+          tr.innerHTML = `
+            <td>${row["Stock Name"]}</td>
+            <td>${Number(row["Quantity"]).toLocaleString()}</td>
+            <td>${parseFloat(row["Buy Price"]).toFixed(2)}</td>
+            <td>${parseFloat(row["Current Price"]).toFixed(2)}</td>
+            <td class="${gainClass}">${gain.toFixed(2)}%</td>
+          `;
+          tableBody.appendChild(tr);
+        });
+
+        const labels = data.map(d => d["Stock Name"]);
+        const values = data.map(d => d["Quantity"] * d["Current Price"]);
+        const colors = labels.map((_, i) => `hsl(${i * 35 % 360}, 65%, 70%)`);
+
+        new Chart(document.getElementById("pieChart"), {
+          type: "pie",
+          data: {
+            labels,
+            datasets: [{
+              data: values,
+              backgroundColor: colors
+            }]
+          },
+          options: {
+            plugins: {
+              legend: { position: "bottom" },
+              title: { display: true, text: "Portfolio Allocation by Value" }
+            }
+          }
+        });
+      } catch (err) {
+        errorMsg.innerHTML = `Error displaying portfolio. <a href="portfolio.html">Try again</a>`;
+      }
+    }
+
+    function downloadCSV() {
+      const data = JSON.parse(localStorage.getItem("portfolioData") || "[]");
+      if (!data.length) return;
+
+      let csv = "Stock Name,Quantity,Buy Price,Current Price,Gain (%)\n";
+      data.forEach(row => {
+        csv += `${row["Stock Name"]},${row["Quantity"]},${row["Buy Price"]},${row["Current Price"]},${row["Gain (%)"]}\n`;
+      });
+
+      const blob = new Blob([csv], { type: "text/csv" });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = "portfolio_analysis.csv";
+      a.click();
+      URL.revokeObjectURL(url);
+    }
+  </script>
+</body>
+</html>
