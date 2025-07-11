@@ -3,195 +3,282 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Portfolio Analysis – Finoptix</title>
+  <title>Finoptix – Portfolio Dashboard</title>
   <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600&display=swap" />
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   <style>
     body {
       margin: 0;
+      padding: 0;
       font-family: 'Inter', sans-serif;
-      background-color: #f9fafb;
+      background: #f4f6f9;
+      color: #1f2937;
+    }
+
+    .container {
+      max-width: 1080px;
+      margin: 0 auto;
       padding: 20px;
     }
+
     h1 {
       text-align: center;
-      color: #1b1f36;
-      margin-bottom: 20px;
+      margin-bottom: 10px;
+      font-size: 2rem;
+      color: #2d60ff;
     }
-    canvas {
-      max-width: 800px;
-      margin: 20px auto;
-      display: block;
-    }
-    table {
-      width: 100%;
-      max-width: 900px;
-      margin: 20px auto;
-      border-collapse: collapse;
-    }
-    th, td {
-      border: 1px solid #ddd;
-      padding: 10px;
-      font-size: 14px;
+
+    .summary-box {
+      display: flex;
+      justify-content: space-around;
+      background: #fff;
+      border-radius: 12px;
+      box-shadow: 0 4px 16px rgba(0, 0, 0, 0.05);
+      padding: 20px;
+      margin-bottom: 30px;
       text-align: center;
     }
-    th {
-      background-color: #eff6ff;
+
+    .summary-box div {
+      flex: 1;
     }
-    td.positive { color: green; font-weight: 600; }
-    td.negative { color: red; font-weight: 600; }
+
+    .summary-label {
+      font-size: 0.9rem;
+      color: #6b7280;
+    }
+
+    .summary-value {
+      font-size: 1.3rem;
+      font-weight: 600;
+    }
+
+    canvas {
+      max-width: 100%;
+      margin: 30px auto;
+      display: block;
+      background: #fff;
+      border-radius: 12px;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.04);
+      padding: 20px;
+    }
+
+    table {
+      width: 100%;
+      background: #fff;
+      border-collapse: collapse;
+      border-radius: 12px;
+      overflow: hidden;
+      margin-top: 40px;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.04);
+    }
+
+    th, td {
+      padding: 12px;
+      border-bottom: 1px solid #e5e7eb;
+      text-align: center;
+      font-size: 0.95rem;
+    }
+
+    th {
+      background-color: #f0f4ff;
+      font-weight: 600;
+      color: #1e40af;
+    }
+
+    td.positive {
+      color: green;
+      font-weight: 600;
+    }
+
+    td.negative {
+      color: red;
+      font-weight: 600;
+    }
   </style>
 </head>
 <body>
+  <div class="container">
+    <h1>Finoptix Portfolio Dashboard</h1>
 
-<h1>Your Portfolio Performance</h1>
+    <div class="summary-box">
+      <div>
+        <div class="summary-label">Invested Amount</div>
+        <div class="summary-value" id="totalInvested">₹0</div>
+      </div>
+      <div>
+        <div class="summary-label">Current Value</div>
+        <div class="summary-value" id="currentValue">₹0</div>
+      </div>
+      <div>
+        <div class="summary-label">Net Gain/Loss</div>
+        <div class="summary-value" id="netGain">₹0</div>
+      </div>
+    </div>
 
-<canvas id="pieChart"></canvas>
-<canvas id="barChart"></canvas>
-<canvas id="lineChart"></canvas>
+    <canvas id="pieChart" height="200"></canvas>
+    <canvas id="barChart" height="200"></canvas>
+    <canvas id="lineChart" height="200"></canvas>
 
-<table id="resultTable">
-  <thead>
-    <tr>
-      <th>Stock</th>
-      <th>Qty</th>
-      <th>Buy Price</th>
-      <th>Current Price</th>
-      <th>Gain (%)</th>
-    </tr>
-  </thead>
-  <tbody id="tableBody"></tbody>
-</table>
+    <table>
+      <thead>
+        <tr>
+          <th>Stock</th>
+          <th>Qty</th>
+          <th>Buy Price</th>
+          <th>Current Price</th>
+          <th>Gain (%)</th>
+        </tr>
+      </thead>
+      <tbody id="tableBody"></tbody>
+    </table>
+  </div>
 
-<script>
-  let rawData = JSON.parse(localStorage.getItem("portfolioData") || "[]");
+  <script>
+    let rawData = JSON.parse(localStorage.getItem("portfolioData") || "[]");
 
-  const pieCtx = document.getElementById("pieChart").getContext("2d");
-  const barCtx = document.getElementById("barChart").getContext("2d");
-  const lineCtx = document.getElementById("lineChart").getContext("2d");
+    const pieCtx = document.getElementById("pieChart").getContext("2d");
+    const barCtx = document.getElementById("barChart").getContext("2d");
+    const lineCtx = document.getElementById("lineChart").getContext("2d");
 
-  const pieChart = new Chart(pieCtx, {
-    type: "pie",
-    data: { labels: [], datasets: [{ data: [], backgroundColor: [] }] },
-    options: {
-      plugins: {
-        title: { display: true, text: "Portfolio Allocation" },
-        legend: { position: "bottom" }
-      }
-    }
-  });
-
-  const barChart = new Chart(barCtx, {
-    type: "bar",
-    data: {
-      labels: [],
-      datasets: [{
-        label: "Gain/Loss (%)",
-        data: [],
-        backgroundColor: [],
-      }]
-    },
-    options: {
-      plugins: {
-        title: { display: true, text: "Stock Gain/Loss %" },
-        legend: { display: false }
-      },
-      scales: {
-        y: { beginAtZero: true }
-      }
-    }
-  });
-
-  const lineChart = new Chart(lineCtx, {
-    type: "line",
-    data: {
-      labels: [],
-      datasets: []
-    },
-    options: {
-      responsive: true,
-      plugins: {
-        title: {
-          display: true,
-          text: "Live Price Movement (Top Stocks)"
-        },
-        legend: {
-          position: 'bottom'
+    const pieChart = new Chart(pieCtx, {
+      type: "pie",
+      data: { labels: [], datasets: [{ data: [], backgroundColor: [] }] },
+      options: {
+        plugins: {
+          title: { display: true, text: "Portfolio Allocation" },
+          legend: { position: "bottom" }
         }
       }
+    });
+
+    const barChart = new Chart(barCtx, {
+      type: "bar",
+      data: {
+        labels: [],
+        datasets: [{
+          label: "Gain/Loss (%)",
+          data: [],
+          backgroundColor: [],
+        }]
+      },
+      options: {
+        plugins: {
+          title: { display: true, text: "Stock Gain/Loss %" },
+          legend: { display: false }
+        },
+        scales: {
+          y: { beginAtZero: true }
+        }
+      }
+    });
+
+    const lineChart = new Chart(lineCtx, {
+      type: "line",
+      data: {
+        labels: [],
+        datasets: []
+      },
+      options: {
+        responsive: true,
+        plugins: {
+          title: {
+            display: true,
+            text: "Live Price Movement (Simulated)"
+          },
+          legend: {
+            position: 'bottom'
+          }
+        }
+      }
+    });
+
+    function updateTable(data) {
+      const body = document.getElementById("tableBody");
+      body.innerHTML = "";
+      data.forEach(stock => {
+        const gainClass = stock["Gain (%)"] >= 0 ? "positive" : "negative";
+        body.innerHTML += `
+          <tr>
+            <td>${stock["Stock Name"]}</td>
+            <td>${stock["Quantity"]}</td>
+            <td>${stock["Buy Price"]}</td>
+            <td>${stock["Current Price"]}</td>
+            <td class="${gainClass}">${stock["Gain (%)"]}%</td>
+          </tr>
+        `;
+      });
     }
-  });
 
-  function updateTable(data) {
-    const body = document.getElementById("tableBody");
-    body.innerHTML = "";
-    data.forEach(stock => {
-      const gainClass = stock["Gain (%)"] >= 0 ? "positive" : "negative";
-      body.innerHTML += `
-        <tr>
-          <td>${stock["Stock Name"]}</td>
-          <td>${stock["Quantity"]}</td>
-          <td>${stock["Buy Price"]}</td>
-          <td>${stock["Current Price"]}</td>
-          <td class="${gainClass}">${stock["Gain (%)"]}%</td>
-        </tr>
-      `;
-    });
-  }
+    function updateSummary(data) {
+      let totalInvested = 0;
+      let currentValue = 0;
 
-  async function fetchLiveData() {
-    const res = await fetch("/api/data", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(rawData)
-    });
-    const updated = await res.json();
-    rawData = updated;
-    localStorage.setItem("portfolioData", JSON.stringify(updated));
-    refreshCharts(updated);
-    updateTable(updated);
-  }
+      data.forEach(s => {
+        totalInvested += s["Quantity"] * s["Buy Price"];
+        currentValue += s["Quantity"] * s["Current Price"];
+      });
 
-  function refreshCharts(data) {
-    const labels = data.map(s => s["Stock Name"]);
-    const allocations = data.map(s => s["Quantity"] * s["Current Price"]);
-    const gains = data.map(s => s["Gain (%)"]);
-    const bgColors = labels.map((_, i) => `hsl(${i * 45 % 360}, 70%, 70%)`);
+      const gain = currentValue - totalInvested;
+      document.getElementById("totalInvested").innerText = "₹" + totalInvested.toFixed(2);
+      document.getElementById("currentValue").innerText = "₹" + currentValue.toFixed(2);
+      document.getElementById("netGain").innerText = (gain >= 0 ? "₹" : "–₹") + Math.abs(gain).toFixed(2);
+    }
 
-    pieChart.data.labels = labels;
-    pieChart.data.datasets[0].data = allocations;
-    pieChart.data.datasets[0].backgroundColor = bgColors;
-    pieChart.update();
+    async function fetchLiveData() {
+      const res = await fetch("/api/data", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(rawData)
+      });
+      const updated = await res.json();
+      rawData = updated;
+      localStorage.setItem("portfolioData", JSON.stringify(updated));
+      renderAll(updated);
+    }
 
-    barChart.data.labels = labels;
-    barChart.data.datasets[0].data = gains;
-    barChart.data.datasets[0].backgroundColor = bgColors;
-    barChart.update();
+    function renderAll(data) {
+      const labels = data.map(s => s["Stock Name"]);
+      const allocations = data.map(s => s["Quantity"] * s["Current Price"]);
+      const gains = data.map(s => s["Gain (%)"]);
+      const bgColors = labels.map((_, i) => `hsl(${i * 40 % 360}, 70%, 70%)`);
 
-    // Line chart: simulate price movement for top 3 stocks
-    const top3 = data.slice(0, 3);
-    const now = new Date();
-    const timeLabels = Array.from({ length: 6 }, (_, i) =>
-      new Date(now.getTime() - (5 - i) * 60000).toLocaleTimeString()
-    );
+      // Pie
+      pieChart.data.labels = labels;
+      pieChart.data.datasets[0].data = allocations;
+      pieChart.data.datasets[0].backgroundColor = bgColors;
+      pieChart.update();
 
-    lineChart.data.labels = timeLabels;
-    lineChart.data.datasets = top3.map((s, idx) => ({
-      label: s["Stock Name"],
-      data: Array.from({ length: 6 }, () =>
-        (s["Current Price"] * (1 + Math.random() * 0.01 - 0.005)).toFixed(2)
-      ),
-      borderColor: `hsl(${idx * 120}, 70%, 50%)`,
-      fill: false,
-      tension: 0.2
-    }));
-    lineChart.update();
-  }
+      // Bar
+      barChart.data.labels = labels;
+      barChart.data.datasets[0].data = gains;
+      barChart.data.datasets[0].backgroundColor = bgColors;
+      barChart.update();
 
-  refreshCharts(rawData);
-  updateTable(rawData);
+      // Line (simulated)
+      const now = new Date();
+      const timeLabels = Array.from({ length: 6 }, (_, i) =>
+        new Date(now.getTime() - (5 - i) * 60000).toLocaleTimeString()
+      );
 
-  setInterval(fetchLiveData, 60000); // Update every 60s
-</script>
+      lineChart.data.labels = timeLabels;
+      lineChart.data.datasets = data.slice(0, 3).map((s, i) => ({
+        label: s["Stock Name"],
+        data: Array.from({ length: 6 }, () =>
+          (s["Current Price"] * (1 + Math.random() * 0.01 - 0.005)).toFixed(2)
+        ),
+        borderColor: `hsl(${i * 90}, 80%, 40%)`,
+        fill: false,
+        tension: 0.3
+      }));
+      lineChart.update();
+
+      updateSummary(data);
+      updateTable(data);
+    }
+
+    renderAll(rawData);
+    setInterval(fetchLiveData, 60000);
+  </script>
 </body>
 </html>
