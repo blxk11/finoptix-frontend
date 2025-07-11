@@ -4,109 +4,194 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>Portfolio Analysis – Finoptix</title>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600&display=swap" rel="stylesheet"/>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600&display=swap" />
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-  <link rel="stylesheet" href="css/style.css">
+  <style>
+    body {
+      margin: 0;
+      font-family: 'Inter', sans-serif;
+      background-color: #f9fafb;
+      padding: 20px;
+    }
+    h1 {
+      text-align: center;
+      color: #1b1f36;
+      margin-bottom: 20px;
+    }
+    canvas {
+      max-width: 800px;
+      margin: 20px auto;
+      display: block;
+    }
+    table {
+      width: 100%;
+      max-width: 900px;
+      margin: 20px auto;
+      border-collapse: collapse;
+    }
+    th, td {
+      border: 1px solid #ddd;
+      padding: 10px;
+      font-size: 14px;
+      text-align: center;
+    }
+    th {
+      background-color: #eff6ff;
+    }
+    td.positive { color: green; font-weight: 600; }
+    td.negative { color: red; font-weight: 600; }
+  </style>
 </head>
 <body>
-  <div class="analysis-box">
-    <h1>Your Portfolio Performance</h1>
 
-    <div class="chart-container">
-      <canvas id="pieChart"></canvas>
-    </div>
+<h1>Your Portfolio Performance</h1>
 
-    <table id="resultTable" style="display:none;">
-      <thead>
-        <tr>
-          <th>Stock Name</th>
-          <th>Quantity</th>
-          <th>Buy Price</th>
-          <th>Current Price</th>
-          <th>Gain (%)</th>
-        </tr>
-      </thead>
-      <tbody id="tableBody"></tbody>
-    </table>
+<canvas id="pieChart"></canvas>
+<canvas id="barChart"></canvas>
+<canvas id="lineChart"></canvas>
 
-    <button class="download-btn" onclick="downloadCSV()" id="downloadBtn" style="display:none;">Download CSV</button>
-    <div class="error-msg" id="errorMsg"></div>
-  </div>
+<table id="resultTable">
+  <thead>
+    <tr>
+      <th>Stock</th>
+      <th>Qty</th>
+      <th>Buy Price</th>
+      <th>Current Price</th>
+      <th>Gain (%)</th>
+    </tr>
+  </thead>
+  <tbody id="tableBody"></tbody>
+</table>
 
-  <script>
-    const raw = localStorage.getItem("portfolioData");
-    const tableBody = document.getElementById("tableBody");
-    const resultTable = document.getElementById("resultTable");
-    const downloadBtn = document.getElementById("downloadBtn");
-    const errorMsg = document.getElementById("errorMsg");
+<script>
+  let rawData = JSON.parse(localStorage.getItem("portfolioData") || "[]");
 
-    if (!raw) {
-      errorMsg.innerHTML = `No data found. <a href="portfolio.html">Upload portfolio again</a>`;
-    } else {
-      try {
-        const data = JSON.parse(raw);
-        if (!Array.isArray(data) || data.length === 0) throw new Error();
+  const pieCtx = document.getElementById("pieChart").getContext("2d");
+  const barCtx = document.getElementById("barChart").getContext("2d");
+  const lineCtx = document.getElementById("lineChart").getContext("2d");
 
-        resultTable.style.display = "table";
-        downloadBtn.style.display = "inline-block";
-
-        data.forEach(row => {
-          const gain = parseFloat(row["Gain (%)"]);
-          const gainClass = gain >= 0 ? "positive" : "negative";
-
-          const tr = document.createElement("tr");
-          tr.innerHTML = `
-            <td>${row["Stock Name"]}</td>
-            <td>${Number(row["Quantity"]).toLocaleString()}</td>
-            <td>${parseFloat(row["Buy Price"]).toFixed(2)}</td>
-            <td>${parseFloat(row["Current Price"]).toFixed(2)}</td>
-            <td class="${gainClass}">${gain.toFixed(2)}%</td>
-          `;
-          tableBody.appendChild(tr);
-        });
-
-        const labels = data.map(d => d["Stock Name"]);
-        const values = data.map(d => d["Quantity"] * d["Current Price"]);
-        const colors = labels.map((_, i) => `hsl(${i * 35 % 360}, 65%, 70%)`);
-
-        new Chart(document.getElementById("pieChart"), {
-          type: "pie",
-          data: {
-            labels,
-            datasets: [{
-              data: values,
-              backgroundColor: colors
-            }]
-          },
-          options: {
-            plugins: {
-              legend: { position: "bottom" },
-              title: { display: true, text: "Portfolio Allocation by Value" }
-            }
-          }
-        });
-      } catch (err) {
-        errorMsg.innerHTML = `Error displaying portfolio. <a href="portfolio.html">Try again</a>`;
+  const pieChart = new Chart(pieCtx, {
+    type: "pie",
+    data: { labels: [], datasets: [{ data: [], backgroundColor: [] }] },
+    options: {
+      plugins: {
+        title: { display: true, text: "Portfolio Allocation" },
+        legend: { position: "bottom" }
       }
     }
+  });
 
-    function downloadCSV() {
-      const data = JSON.parse(localStorage.getItem("portfolioData") || "[]");
-      if (!data.length) return;
-
-      let csv = "Stock Name,Quantity,Buy Price,Current Price,Gain (%)\n";
-      data.forEach(row => {
-        csv += `${row["Stock Name"]},${row["Quantity"]},${row["Buy Price"]},${row["Current Price"]},${row["Gain (%)"]}\n`;
-      });
-
-      const blob = new Blob([csv], { type: "text/csv" });
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement("a");
-      a.href = url;
-      a.download = "portfolio_analysis.csv";
-      a.click();
-      URL.revokeObjectURL(url);
+  const barChart = new Chart(barCtx, {
+    type: "bar",
+    data: {
+      labels: [],
+      datasets: [{
+        label: "Gain/Loss (%)",
+        data: [],
+        backgroundColor: [],
+      }]
+    },
+    options: {
+      plugins: {
+        title: { display: true, text: "Stock Gain/Loss %" },
+        legend: { display: false }
+      },
+      scales: {
+        y: { beginAtZero: true }
+      }
     }
-  </script>
+  });
+
+  const lineChart = new Chart(lineCtx, {
+    type: "line",
+    data: {
+      labels: [],
+      datasets: []
+    },
+    options: {
+      responsive: true,
+      plugins: {
+        title: {
+          display: true,
+          text: "Live Price Movement (Top Stocks)"
+        },
+        legend: {
+          position: 'bottom'
+        }
+      }
+    }
+  });
+
+  function updateTable(data) {
+    const body = document.getElementById("tableBody");
+    body.innerHTML = "";
+    data.forEach(stock => {
+      const gainClass = stock["Gain (%)"] >= 0 ? "positive" : "negative";
+      body.innerHTML += `
+        <tr>
+          <td>${stock["Stock Name"]}</td>
+          <td>${stock["Quantity"]}</td>
+          <td>${stock["Buy Price"]}</td>
+          <td>${stock["Current Price"]}</td>
+          <td class="${gainClass}">${stock["Gain (%)"]}%</td>
+        </tr>
+      `;
+    });
+  }
+
+  async function fetchLiveData() {
+    const res = await fetch("/api/data", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(rawData)
+    });
+    const updated = await res.json();
+    rawData = updated;
+    localStorage.setItem("portfolioData", JSON.stringify(updated));
+    refreshCharts(updated);
+    updateTable(updated);
+  }
+
+  function refreshCharts(data) {
+    const labels = data.map(s => s["Stock Name"]);
+    const allocations = data.map(s => s["Quantity"] * s["Current Price"]);
+    const gains = data.map(s => s["Gain (%)"]);
+    const bgColors = labels.map((_, i) => `hsl(${i * 45 % 360}, 70%, 70%)`);
+
+    pieChart.data.labels = labels;
+    pieChart.data.datasets[0].data = allocations;
+    pieChart.data.datasets[0].backgroundColor = bgColors;
+    pieChart.update();
+
+    barChart.data.labels = labels;
+    barChart.data.datasets[0].data = gains;
+    barChart.data.datasets[0].backgroundColor = bgColors;
+    barChart.update();
+
+    // Line chart: simulate price movement for top 3 stocks
+    const top3 = data.slice(0, 3);
+    const now = new Date();
+    const timeLabels = Array.from({ length: 6 }, (_, i) =>
+      new Date(now.getTime() - (5 - i) * 60000).toLocaleTimeString()
+    );
+
+    lineChart.data.labels = timeLabels;
+    lineChart.data.datasets = top3.map((s, idx) => ({
+      label: s["Stock Name"],
+      data: Array.from({ length: 6 }, () =>
+        (s["Current Price"] * (1 + Math.random() * 0.01 - 0.005)).toFixed(2)
+      ),
+      borderColor: `hsl(${idx * 120}, 70%, 50%)`,
+      fill: false,
+      tension: 0.2
+    }));
+    lineChart.update();
+  }
+
+  refreshCharts(rawData);
+  updateTable(rawData);
+
+  setInterval(fetchLiveData, 60000); // Update every 60s
+</script>
 </body>
 </html>
