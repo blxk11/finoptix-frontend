@@ -6,96 +6,119 @@
   <title>Finoptix – Portfolio Dashboard</title>
   <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600&display=swap" />
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-  <style>
-    body {
-      margin: 0;
-      padding: 0;
-      font-family: 'Inter', sans-serif;
-      background: #f4f6f9;
-      color: #1f2937;
-    }
+<!-- same HTML structure as previous answer -->
+<!-- CHANGES are in the <style> section only (for size + beauty upgrades) -->
 
-    .container {
-      max-width: 1080px;
-      margin: 0 auto;
-      padding: 20px;
-    }
+<style>
+  body {
+    margin: 0;
+    padding: 0;
+    font-family: 'Inter', sans-serif;
+    background: #f4f6f9;
+    color: #1f2937;
+  }
 
-    h1 {
-      text-align: center;
-      margin-bottom: 10px;
-      font-size: 2rem;
-      color: #2d60ff;
-    }
+  .container {
+    max-width: 1080px;
+    margin: 0 auto;
+    padding: 20px;
+  }
 
+  h1 {
+    text-align: center;
+    margin-bottom: 20px;
+    font-size: 2.2rem;
+    color: #2d60ff;
+    letter-spacing: -0.5px;
+  }
+
+  .summary-box {
+    display: flex;
+    justify-content: space-between;
+    background: #fff;
+    border-radius: 14px;
+    box-shadow: 0 6px 20px rgba(0, 0, 0, 0.05);
+    padding: 24px 30px;
+    margin-bottom: 40px;
+    text-align: center;
+    gap: 10px;
+  }
+
+  .summary-box div {
+    flex: 1;
+  }
+
+  .summary-label {
+    font-size: 0.95rem;
+    color: #6b7280;
+    margin-bottom: 6px;
+  }
+
+  .summary-value {
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: #111827;
+  }
+
+  canvas {
+    width: 100% !important;
+    max-width: 700px;
+    height: 380px !important;
+    margin: 40px auto;
+    display: block;
+    background: #ffffff;
+    border-radius: 16px;
+    box-shadow: 0 8px 18px rgba(0, 0, 0, 0.04);
+    padding: 24px;
+  }
+
+  table {
+    width: 100%;
+    background: #fff;
+    border-collapse: collapse;
+    border-radius: 16px;
+    overflow: hidden;
+    margin-top: 40px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.04);
+  }
+
+  th, td {
+    padding: 14px 12px;
+    border-bottom: 1px solid #e5e7eb;
+    text-align: center;
+    font-size: 0.95rem;
+  }
+
+  th {
+    background-color: #eef4ff;
+    font-weight: 600;
+    color: #1e3a8a;
+    font-size: 1rem;
+  }
+
+  td.positive {
+    color: #16a34a;
+    font-weight: 600;
+  }
+
+  td.negative {
+    color: #dc2626;
+    font-weight: 600;
+  }
+
+  @media (max-width: 768px) {
     .summary-box {
-      display: flex;
-      justify-content: space-around;
-      background: #fff;
-      border-radius: 12px;
-      box-shadow: 0 4px 16px rgba(0, 0, 0, 0.05);
+      flex-direction: column;
+      gap: 20px;
       padding: 20px;
-      margin-bottom: 30px;
-      text-align: center;
-    }
-
-    .summary-box div {
-      flex: 1;
-    }
-
-    .summary-label {
-      font-size: 0.9rem;
-      color: #6b7280;
-    }
-
-    .summary-value {
-      font-size: 1.3rem;
-      font-weight: 600;
     }
 
     canvas {
-      max-width: 100%;
-      margin: 30px auto;
-      display: block;
-      background: #fff;
-      border-radius: 12px;
-      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.04);
-      padding: 20px;
+      height: auto;
     }
+  }
+</style>
 
-    table {
-      width: 100%;
-      background: #fff;
-      border-collapse: collapse;
-      border-radius: 12px;
-      overflow: hidden;
-      margin-top: 40px;
-      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.04);
-    }
-
-    th, td {
-      padding: 12px;
-      border-bottom: 1px solid #e5e7eb;
-      text-align: center;
-      font-size: 0.95rem;
-    }
-
-    th {
-      background-color: #f0f4ff;
-      font-weight: 600;
-      color: #1e40af;
-    }
-
-    td.positive {
-      color: green;
-      font-weight: 600;
-    }
-
-    td.negative {
-      color: red;
-      font-weight: 600;
-    }
-  </style>
 </head>
 <body>
   <div class="container">
