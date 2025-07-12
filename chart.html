@@ -65,95 +65,121 @@
 
   <div id="errorMsg"></div>
 
-  <script>
-    const raw = localStorage.getItem("portfolioData");
-    const errorMsg = document.getElementById("errorMsg");
+ <script>
+  const raw = localStorage.getItem("portfolioData");
+  const saved = localStorage.getItem("savedPortfolio");
+  const tableBody = document.getElementById("tableBody");
+  const pieChartCanvas = document.getElementById("pieChart");
+  const resultTable = document.getElementById("resultTable");
+  const downloadBtn = document.getElementById("downloadBtn");
+  const errorMsg = document.getElementById("errorMsg");
+  const saveBtn = document.getElementById("saveBtn");
+  const removeBtn = document.getElementById("removeBtn");
 
-    if (!raw) {
-      errorMsg.textContent = "No portfolio data found. Please upload again.";
-    } else {
-      try {
-        const data = JSON.parse(raw);
+  let portfolioData;
 
-        const labels = data.map(d => d["Stock Name"]);
-        const values = data.map(d => d["Quantity"] * d["Current Price"]);
-        const currentPrices = data.map(d => d["Current Price"]);
-        const buyPrices = data.map(d => d["Buy Price"]);
-
-        // Pie Chart
-        new Chart(document.getElementById("pieChart"), {
-          type: "pie",
-          data: {
-            labels,
-            datasets: [{
-              data: values,
-              backgroundColor: labels.map((_, i) => `hsl(${i * 40 % 360}, 70%, 70%)`)
-            }]
-          },
-          options: {
-            responsive: true,
-            plugins: {
-              legend: { position: "bottom" },
-              title: { display: true, text: "Stock Allocation by Value" }
-            }
-          }
-        });
-
-        // Bar Chart
-        new Chart(document.getElementById("barChart"), {
-          type: "bar",
-          data: {
-            labels,
-            datasets: [{
-              label: "Total Value (₹)",
-              data: values,
-              backgroundColor: "#2563eb"
-            }]
-          },
-          options: {
-            responsive: true,
-            scales: {
-              y: {
-                beginAtZero: true,
-                title: { display: true, text: "₹ Rupees" }
-              }
-            }
-          }
-        });
-
-        // Line Chart
-        new Chart(document.getElementById("lineChart"), {
-          type: "line",
-          data: {
-            labels,
-            datasets: [{
-              label: "Buy Price",
-              data: buyPrices,
-              borderColor: "#10b981",
-              fill: false
-            }, {
-              label: "Current Price",
-              data: currentPrices,
-              borderColor: "#ef4444",
-              fill: false
-            }]
-          },
-          options: {
-            responsive: true,
-            plugins: {
-              title: {
-                display: true,
-                text: "Buy vs Current Price Comparison"
-              }
-            }
-          }
-        });
-
-      } catch (e) {
-        errorMsg.textContent = "Error loading charts. Please try uploading again.";
-        console.error(e);
-      }
+  if (raw) {
+    try {
+      portfolioData = JSON.parse(raw);
+      renderPortfolio(portfolioData);
+    } catch (err) {
+      errorMsg.innerHTML = `Something went wrong. <a href="portfolio.html">Try again</a>.`;
     }
-  </script>
+  } else if (saved) {
+    try {
+      portfolioData = JSON.parse(saved);
+      renderPortfolio(portfolioData);
+    } catch (err) {
+      errorMsg.innerHTML = `Something went wrong loading saved portfolio.`;
+    }
+  } else {
+    errorMsg.innerHTML = `No portfolio data found. <a href="portfolio.html">Click here to upload.</a>`;
+  }
+
+  function renderPortfolio(data) {
+    if (!Array.isArray(data) || data.length === 0) {
+      errorMsg.innerHTML = `Invalid portfolio format. <a href="portfolio.html">Try again</a>.`;
+      return;
+    }
+
+    resultTable.style.display = "table";
+    downloadBtn.style.display = "inline-block";
+    saveBtn.style.display = "inline-block";
+    removeBtn.style.display = "inline-block";
+
+    // Fill table
+    data.forEach(row => {
+      const tr = document.createElement('tr');
+      const gain = parseFloat(row["Gain (%)"]);
+      const gainClass = gain >= 0 ? 'positive' : 'negative';
+
+      tr.innerHTML = `
+        <td>${row["Stock Name"]}</td>
+        <td>${Number(row["Quantity"]).toLocaleString()}</td>
+        <td>${parseFloat(row["Buy Price"]).toFixed(2)}</td>
+        <td>${parseFloat(row["Current Price"]).toFixed(2)}</td>
+        <td class="${gainClass}">${gain.toFixed(2)}%</td>
+      `;
+      tableBody.appendChild(tr);
+    });
+
+    // Pie chart
+    const labels = data.map(d => d["Stock Name"]);
+    const values = data.map(d => d["Quantity"] * d["Current Price"]);
+    const colors = labels.map((_, i) => `hsl(${i * 35 % 360}, 70%, 70%)`);
+
+    new Chart(pieChartCanvas, {
+      type: 'pie',
+      data: {
+        labels: labels,
+        datasets: [{
+          data: values,
+          backgroundColor: colors
+        }]
+      },
+      options: {
+        responsive: true,
+        plugins: {
+          legend: { position: 'bottom' },
+          title: {
+            display: true,
+            text: 'Portfolio Allocation by Value'
+          }
+        }
+      }
+    });
+  }
+
+  function downloadCSV() {
+    const data = portfolioData;
+    if (!data || !data.length) return;
+
+    let csv = "Stock Name,Quantity,Buy Price,Current Price,Gain (%)\n";
+    data.forEach(row => {
+      csv += `${row["Stock Name"]},${row["Quantity"]},${row["Buy Price"]},${row["Current Price"]},${row["Gain (%)"]}\n`;
+    });
+
+    const blob = new Blob([csv], { type: 'text/csv' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = "portfolio_analysis.csv";
+    a.click();
+    URL.revokeObjectURL(url);
+  }
+
+  function savePortfolio() {
+    if (portfolioData) {
+      localStorage.setItem("savedPortfolio", JSON.stringify(portfolioData));
+      alert("Portfolio saved successfully ✅");
+    }
+  }
+
+  function removeSavedPortfolio() {
+    localStorage.removeItem("savedPortfolio");
+    alert("Saved portfolio removed ❌");
+  }
+</script>
+
 </body>
 </html>
