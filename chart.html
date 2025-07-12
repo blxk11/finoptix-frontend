@@ -41,43 +41,23 @@
       text-align: center;
       margin-top: 30px;
     }
-    .buttons {
+    .action-buttons {
       text-align: center;
       margin-top: 30px;
     }
-    .buttons button {
-      background-color: #2d60ff;
+    .action-buttons button {
+      background-color: #2563eb;
       color: white;
-      border: none;
       padding: 12px 20px;
       margin: 0 10px;
-      border-radius: 6px;
-      font-weight: 600;
+      font-size: 1rem;
+      border: none;
+      border-radius: 8px;
       cursor: pointer;
     }
-    .buttons button:hover {
-      background-color: #1e45d8;
+    .action-buttons button:hover {
+      background-color: #1e40af;
     }
-    table {
-      margin: auto;
-      margin-top: 30px;
-      border-collapse: collapse;
-      width: 100%;
-      max-width: 900px;
-      display: none;
-    }
-    th, td {
-      padding: 12px;
-      border: 1px solid #e5e7eb;
-      font-size: 0.95rem;
-      text-align: center;
-    }
-    th {
-      background-color: #eff6ff;
-      font-weight: 600;
-    }
-    td.positive { color: green; font-weight: bold; }
-    td.negative { color: red; font-weight: bold; }
   </style>
 </head>
 <body>
@@ -100,210 +80,161 @@
     </div>
   </div>
 
-  <div class="buttons">
-    <button id="saveBtn" style="display:none;" onclick="savePortfolio()">💾 Save Portfolio</button>
-    <button id="removeBtn" style="display:none;" onclick="removeSavedPortfolio()">🗑 Remove Saved</button>
-    <button id="downloadBtn" style="display:none;" onclick="downloadCSV()">⬇️ Download CSV</button>
+  <div class="action-buttons">
+    <button id="downloadBtn" onclick="downloadCSV()">⬇️ Download CSV</button>
+    <button id="saveBtn" onclick="savePortfolio()">💾 Save Portfolio</button>
+    <button id="removeBtn" onclick="removeSavedPortfolio()">❌ Remove Portfolio</button>
   </div>
-
-  <table id="resultTable">
-    <thead>
-      <tr>
-        <th>Stock Name</th>
-        <th>Quantity</th>
-        <th>Buy Price</th>
-        <th>Current Price</th>
-        <th>Gain (%)</th>
-      </tr>
-    </thead>
-    <tbody id="tableBody"></tbody>
-  </table>
 
   <div id="errorMsg"></div>
 
-<script>
-  const raw = localStorage.getItem("portfolioData");
-  const saved = localStorage.getItem("savedPortfolio");
-  const tableBody = document.getElementById("tableBody");
-  const pieChartCanvas = document.getElementById("pieChart");
-  const barChartCanvas = document.getElementById("barChart");
-  const lineChartCanvas = document.getElementById("lineChart");
-  const resultTable = document.getElementById("resultTable");
-  const downloadBtn = document.getElementById("downloadBtn");
-  const errorMsg = document.getElementById("errorMsg");
-  const saveBtn = document.getElementById("saveBtn");
-  const removeBtn = document.getElementById("removeBtn");
+  <script>
+    const raw = localStorage.getItem("portfolioData");
+    const saved = localStorage.getItem("savedPortfolio");
+    const pieChartCanvas = document.getElementById("pieChart");
+    const barChartCanvas = document.getElementById("barChart");
+    const lineChartCanvas = document.getElementById("lineChart");
+    const errorMsg = document.getElementById("errorMsg");
+    let portfolioData;
 
-  let portfolioData;
-
-  if (raw) {
-    try {
-      portfolioData = JSON.parse(raw);
-      renderPortfolio(portfolioData);
-    } catch (err) {
-      errorMsg.innerHTML = `Something went wrong. <a href="portfolio.html">Try again</a>.`;
-    }
-  } else if (saved) {
-    try {
-      portfolioData = JSON.parse(saved);
-      renderPortfolio(portfolioData);
-    } catch (err) {
-      errorMsg.innerHTML = `Something went wrong loading saved portfolio.`;
-    }
-  } else {
-    errorMsg.innerHTML = `No portfolio data found. <a href="portfolio.html">Click here to upload.</a>`;
-  }
-
-  function renderPortfolio(data) {
-    if (!Array.isArray(data) || data.length === 0) {
-      errorMsg.innerHTML = `Invalid portfolio format. <a href="portfolio.html">Try again</a>.`;
-      return;
-    }
-
-    resultTable.style.display = "table";
-    downloadBtn.style.display = "inline-block";
-    saveBtn.style.display = "inline-block";
-    removeBtn.style.display = "inline-block";
-
-    // Fill table
-    data.forEach(row => {
-      const tr = document.createElement('tr');
-      const gain = parseFloat(row["Gain (%)"]);
-      const gainClass = gain >= 0 ? 'positive' : 'negative';
-
-      tr.innerHTML = `
-        <td>${row["Stock Name"]}</td>
-        <td>${Number(row["Quantity"]).toLocaleString()}</td>
-        <td>${parseFloat(row["Buy Price"]).toFixed(2)}</td>
-        <td>${parseFloat(row["Current Price"]).toFixed(2)}</td>
-        <td class="${gainClass}">${gain.toFixed(2)}%</td>
-      `;
-      tableBody.appendChild(tr);
-    });
-
-    const labels = data.map(d => d["Stock Name"]);
-    const values = data.map(d => d["Quantity"] * d["Current Price"]);
-    const prices = data.map(d => d["Current Price"]);
-    const colors = labels.map((_, i) => `hsl(${i * 35 % 360}, 70%, 70%)`);
-
-    // Pie Chart
-    new Chart(pieChartCanvas, {
-      type: 'pie',
-      data: {
-        labels: labels,
-        datasets: [{
-          data: values,
-          backgroundColor: colors
-        }]
-      },
-      options: {
-        responsive: true,
-        plugins: {
-          legend: { position: 'bottom' },
-          title: {
-            display: true,
-            text: 'Portfolio Allocation by Value'
-          }
-        }
+    if (raw) {
+      try {
+        portfolioData = JSON.parse(raw);
+        renderCharts(portfolioData);
+      } catch {
+        errorMsg.innerHTML = `Something went wrong. <a href="portfolio.html">Try again</a>.`;
       }
-    });
+    } else if (saved) {
+      try {
+        portfolioData = JSON.parse(saved);
+        renderCharts(portfolioData);
+      } catch {
+        errorMsg.innerHTML = `Something went wrong loading saved portfolio.`;
+      }
+    } else {
+      errorMsg.innerHTML = `No portfolio data found. <a href="portfolio.html">Click here to upload.</a>`;
+    }
 
-    // Bar Chart
-    new Chart(barChartCanvas, {
-      type: 'bar',
-      data: {
-        labels: labels,
-        datasets: [{
-          label: 'Stock Value ₹',
-          data: values,
-          backgroundColor: colors
-        }]
-      },
-      options: {
-        responsive: true,
-        plugins: {
-          legend: { display: false },
-          title: {
-            display: true,
-            text: 'Value of Each Stock'
-          }
+    function renderCharts(data) {
+      if (!Array.isArray(data) || data.length === 0) {
+        errorMsg.innerHTML = `Invalid portfolio format. <a href="portfolio.html">Try again</a>.`;
+        return;
+      }
+
+      const labels = data.map(d => d["Stock Name"]);
+      const values = data.map(d => d["Quantity"] * d["Current Price"]);
+      const prices = data.map(d => d["Current Price"]);
+      const colors = labels.map((_, i) => `hsl(${i * 35 % 360}, 70%, 70%)`);
+
+      // Pie Chart
+      new Chart(pieChartCanvas, {
+        type: 'pie',
+        data: {
+          labels: labels,
+          datasets: [{
+            data: values,
+            backgroundColor: colors
+          }]
         },
-        scales: {
-          y: {
-            beginAtZero: true,
-            ticks: {
-              callback: value => `₹${value.toLocaleString()}`
+        options: {
+          responsive: true,
+          plugins: {
+            legend: { position: 'bottom' },
+            title: {
+              display: true,
+              text: 'Portfolio Allocation by Value'
             }
           }
         }
-      }
-    });
+      });
 
-    // Line Chart
-    new Chart(lineChartCanvas, {
-      type: 'line',
-      data: {
-        labels: labels,
-        datasets: [{
-          label: 'Current Price ₹',
-          data: prices,
-          fill: false,
-          borderColor: '#2d60ff',
-          backgroundColor: '#2d60ff',
-          tension: 0.3
-        }]
-      },
-      options: {
-        responsive: true,
-        plugins: {
-          legend: { display: false },
-          title: {
-            display: true,
-            text: 'Price Trend of Stocks'
-          }
+      // Bar Chart
+      new Chart(barChartCanvas, {
+        type: 'bar',
+        data: {
+          labels: labels,
+          datasets: [{
+            label: 'Value (₹)',
+            data: values,
+            backgroundColor: colors
+          }]
         },
-        scales: {
-          y: {
-            beginAtZero: false,
-            ticks: {
-              callback: value => `₹${value.toFixed(2)}`
+        options: {
+          responsive: true,
+          plugins: {
+            legend: { display: false },
+            title: {
+              display: true,
+              text: 'Total Value of Each Stock'
+            }
+          },
+          scales: {
+            y: {
+              beginAtZero: true,
+              ticks: { callback: value => '₹' + value.toLocaleString() }
             }
           }
         }
-      }
-    });
-  }
+      });
 
-  function downloadCSV() {
-    const data = portfolioData;
-    if (!data || !data.length) return;
-
-    let csv = "Stock Name,Quantity,Buy Price,Current Price,Gain (%)\n";
-    data.forEach(row => {
-      csv += `${row["Stock Name"]},${row["Quantity"]},${row["Buy Price"]},${row["Current Price"]},${row["Gain (%)"]}\n`;
-    });
-
-    const blob = new Blob([csv], { type: 'text/csv' });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement("a");
-    a.href = url;
-    a.download = "portfolio_analysis.csv";
-    a.click();
-    URL.revokeObjectURL(url);
-  }
-
-  function savePortfolio() {
-    if (portfolioData) {
-      localStorage.setItem("savedPortfolio", JSON.stringify(portfolioData));
-      alert("Portfolio saved successfully ✅");
+      // Line Chart
+      new Chart(lineChartCanvas, {
+        type: 'line',
+        data: {
+          labels: labels,
+          datasets: [{
+            label: 'Current Price',
+            data: prices,
+            borderColor: '#2563eb',
+            backgroundColor: 'rgba(37,99,235,0.2)',
+            fill: true,
+            tension: 0.4
+          }]
+        },
+        options: {
+          responsive: true,
+          plugins: {
+            legend: { position: 'top' },
+            title: {
+              display: true,
+              text: 'Stock Price Trend'
+            }
+          }
+        }
+      });
     }
-  }
 
-  function removeSavedPortfolio() {
-    localStorage.removeItem("savedPortfolio");
-    alert("Saved portfolio removed ❌");
-  }
-</script>
+    function downloadCSV() {
+      const data = portfolioData;
+      if (!data || !data.length) return;
 
+      let csv = "Stock Name,Quantity,Buy Price,Current Price,Gain (%)\n";
+      data.forEach(row => {
+        csv += `${row["Stock Name"]},${row["Quantity"]},${row["Buy Price"]},${row["Current Price"]},${row["Gain (%)"]}\n`;
+      });
+
+      const blob = new Blob([csv], { type: 'text/csv' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = "portfolio_analysis.csv";
+      a.click();
+      URL.revokeObjectURL(url);
+    }
+
+    function savePortfolio() {
+      if (portfolioData) {
+        localStorage.setItem("savedPortfolio", JSON.stringify(portfolioData));
+        localStorage.setItem("hasSavedPortfolio", "true");
+        alert("Portfolio saved successfully ✅");
+      }
+    }
+
+    function removeSavedPortfolio() {
+      localStorage.removeItem("savedPortfolio");
+      localStorage.removeItem("hasSavedPortfolio");
+      alert("Saved portfolio removed ❌");
+    }
+  </script>
 </body>
 </html>
