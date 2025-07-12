@@ -4,17 +4,78 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>Finoptix – Master Your Money</title>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600&display=swap" rel="stylesheet"/>
-  <link rel="stylesheet" href="css/style.css">
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600&display=swap" />
+  <style>
+    body {
+      margin: 0;
+      font-family: 'Inter', sans-serif;
+      background-color: #f9fafb;
+      color: #1b1f36;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 60px 20px;
+    }
+
+    h1 {
+      font-size: 2.4rem;
+      margin-bottom: 10px;
+    }
+
+    p {
+      font-size: 1.2rem;
+      margin-bottom: 30px;
+      text-align: center;
+      max-width: 600px;
+    }
+
+    .btn-group {
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+    }
+
+    .btn {
+      padding: 14px 24px;
+      background-color: #2563eb;
+      color: white;
+      border: none;
+      border-radius: 8px;
+      font-size: 1.1rem;
+      cursor: pointer;
+      text-align: center;
+      transition: background-color 0.3s ease;
+      text-decoration: none;
+    }
+
+    .btn:hover {
+      background-color: #1e40af;
+    }
+
+    @media (min-width: 600px) {
+      .btn-group {
+        flex-direction: row;
+      }
+    }
+  </style>
 </head>
 <body>
-  <div class="container">
-    <h1>Welcome to Finoptix</h1>
-    <p>Your personal portfolio analyzer.</p>
-    <div class="buttons">
-      <a href="portfolio.html" class="btn">Upload Portfolio</a>
-      <a href="chart.html" class="btn secondary">View Chart</a>
-    </div>
+
+  <h1>💼 Welcome to Finoptix</h1>
+  <p>Upload and visualize your portfolio across stocks and mutual funds — all in one clean dashboard.</p>
+
+  <div class="btn-group">
+    <a class="btn" href="portfolio.html">Upload Portfolio</a>
+    <a class="btn" href="chart.html">View Analysis</a>
+    <a class="btn" href="chart.html" id="savedPortfolioBtn" style="display:none;">View Saved Portfolio</a>
   </div>
+
+  <script>
+    const hasSaved = localStorage.getItem("hasSavedPortfolio");
+    if (hasSaved) {
+      document.getElementById("savedPortfolioBtn").style.display = "inline-block";
+    }
+  </script>
+
 </body>
 </html>
