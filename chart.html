@@ -41,6 +41,43 @@
       text-align: center;
       margin-top: 30px;
     }
+    .buttons {
+      text-align: center;
+      margin-top: 30px;
+    }
+    .buttons button {
+      background-color: #2d60ff;
+      color: white;
+      border: none;
+      padding: 12px 20px;
+      margin: 0 10px;
+      border-radius: 6px;
+      font-weight: 600;
+      cursor: pointer;
+    }
+    .buttons button:hover {
+      background-color: #1e45d8;
+    }
+    table {
+      margin: auto;
+      margin-top: 30px;
+      border-collapse: collapse;
+      width: 100%;
+      max-width: 900px;
+      display: none;
+    }
+    th, td {
+      padding: 12px;
+      border: 1px solid #e5e7eb;
+      font-size: 0.95rem;
+      text-align: center;
+    }
+    th {
+      background-color: #eff6ff;
+      font-weight: 600;
+    }
+    td.positive { color: green; font-weight: bold; }
+    td.negative { color: red; font-weight: bold; }
   </style>
 </head>
 <body>
@@ -63,13 +100,34 @@
     </div>
   </div>
 
+  <div class="buttons">
+    <button id="saveBtn" style="display:none;" onclick="savePortfolio()">💾 Save Portfolio</button>
+    <button id="removeBtn" style="display:none;" onclick="removeSavedPortfolio()">🗑 Remove Saved</button>
+    <button id="downloadBtn" style="display:none;" onclick="downloadCSV()">⬇️ Download CSV</button>
+  </div>
+
+  <table id="resultTable">
+    <thead>
+      <tr>
+        <th>Stock Name</th>
+        <th>Quantity</th>
+        <th>Buy Price</th>
+        <th>Current Price</th>
+        <th>Gain (%)</th>
+      </tr>
+    </thead>
+    <tbody id="tableBody"></tbody>
+  </table>
+
   <div id="errorMsg"></div>
 
- <script>
+<script>
   const raw = localStorage.getItem("portfolioData");
   const saved = localStorage.getItem("savedPortfolio");
   const tableBody = document.getElementById("tableBody");
   const pieChartCanvas = document.getElementById("pieChart");
+  const barChartCanvas = document.getElementById("barChart");
+  const lineChartCanvas = document.getElementById("lineChart");
   const resultTable = document.getElementById("resultTable");
   const downloadBtn = document.getElementById("downloadBtn");
   const errorMsg = document.getElementById("errorMsg");
@@ -123,11 +181,12 @@
       tableBody.appendChild(tr);
     });
 
-    // Pie chart
     const labels = data.map(d => d["Stock Name"]);
     const values = data.map(d => d["Quantity"] * d["Current Price"]);
+    const prices = data.map(d => d["Current Price"]);
     const colors = labels.map((_, i) => `hsl(${i * 35 % 360}, 70%, 70%)`);
 
+    // Pie Chart
     new Chart(pieChartCanvas, {
       type: 'pie',
       data: {
@@ -144,6 +203,71 @@
           title: {
             display: true,
             text: 'Portfolio Allocation by Value'
+          }
+        }
+      }
+    });
+
+    // Bar Chart
+    new Chart(barChartCanvas, {
+      type: 'bar',
+      data: {
+        labels: labels,
+        datasets: [{
+          label: 'Stock Value ₹',
+          data: values,
+          backgroundColor: colors
+        }]
+      },
+      options: {
+        responsive: true,
+        plugins: {
+          legend: { display: false },
+          title: {
+            display: true,
+            text: 'Value of Each Stock'
+          }
+        },
+        scales: {
+          y: {
+            beginAtZero: true,
+            ticks: {
+              callback: value => `₹${value.toLocaleString()}`
+            }
+          }
+        }
+      }
+    });
+
+    // Line Chart
+    new Chart(lineChartCanvas, {
+      type: 'line',
+      data: {
+        labels: labels,
+        datasets: [{
+          label: 'Current Price ₹',
+          data: prices,
+          fill: false,
+          borderColor: '#2d60ff',
+          backgroundColor: '#2d60ff',
+          tension: 0.3
+        }]
+      },
+      options: {
+        responsive: true,
+        plugins: {
+          legend: { display: false },
+          title: {
+            display: true,
+            text: 'Price Trend of Stocks'
+          }
+        },
+        scales: {
+          y: {
+            beginAtZero: false,
+            ticks: {
+              callback: value => `₹${value.toFixed(2)}`
+            }
           }
         }
       }
