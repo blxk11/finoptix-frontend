@@ -3,96 +3,96 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Portfolio Candlestick – Finoptix</title>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600&display=swap" rel="stylesheet">
+  <title>Finoptix – Portfolio Insights</title>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600&display=swap"/>
   <script src="https://cdn.jsdelivr.net/npm/apexcharts"></script>
   <style>
     body {
-      margin: 0;
       font-family: 'Inter', sans-serif;
-      background-color: #f9fafb;
-      padding: 30px;
+      margin: 0;
+      background: #f4f6fa;
+      padding: 20px;
       color: #1b1f36;
     }
-
-    .container {
-      max-width: 1200px;
-      margin: auto;
-    }
-
     h1 {
-      font-size: 2rem;
       text-align: center;
+      font-size: 2rem;
       margin-bottom: 30px;
     }
-
-    #chart {
-      background: #fff;
-      border-radius: 12px;
-      box-shadow: 0 8px 24px rgba(0, 0, 0, 0.06);
-      padding: 20px;
+    .chart-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      grid-gap: 30px;
       margin-bottom: 40px;
     }
-
+    .chart-box {
+      background: #fff;
+      border-radius: 12px;
+      padding: 20px;
+      box-shadow: 0 8px 20px rgba(0, 0, 0, 0.05);
+    }
     table {
       width: 100%;
       border-collapse: collapse;
       background: #fff;
-      margin-top: 20px;
-      box-shadow: 0 8px 24px rgba(0, 0, 0, 0.04);
+      border-radius: 12px;
+      overflow: hidden;
+      box-shadow: 0 8px 20px rgba(0, 0, 0, 0.05);
     }
-
     th, td {
       padding: 14px;
-      border: 1px solid #e5e7eb;
+      text-align: left;
       font-size: 0.95rem;
+      border-bottom: 1px solid #eee;
     }
-
     th {
-      background-color: #f3f4f6;
+      background-color: #eff6ff;
+    }
+    td.positive {
+      color: green;
       font-weight: 600;
     }
-
-    td.positive { color: green; font-weight: 600; }
-    td.negative { color: red; font-weight: 600; }
-
+    td.negative {
+      color: red;
+      font-weight: 600;
+    }
     .download-btn {
-      display: block;
-      margin: 30px auto 0;
+      display: inline-block;
+      margin-top: 20px;
+      padding: 12px 18px;
       background-color: #2563eb;
-      color: white;
-      padding: 14px 24px;
-      font-size: 1rem;
+      color: #fff;
       border: none;
       border-radius: 8px;
+      font-weight: 600;
       cursor: pointer;
-      transition: background-color 0.3s ease;
     }
-
     .download-btn:hover {
       background-color: #1e40af;
     }
-
-    .error-msg {
-      color: red;
-      font-size: 1rem;
-      text-align: center;
-      margin-top: 20px;
-    }
-
-    .error-msg a {
-      color: #2563eb;
-      text-decoration: none;
-      font-weight: 500;
+    @media (max-width: 768px) {
+      .chart-grid {
+        grid-template-columns: 1fr;
+      }
     }
   </style>
 </head>
 <body>
 
-<div class="container">
-  <h1>Your Portfolio Candlestick Chart</h1>
+  <h1>Your Portfolio Insights</h1>
 
-  <div id="chart"></div>
+  <div class="chart-grid">
+    <div class="chart-box">
+      <div id="pieChart"></div>
+    </div>
+    <div class="chart-box">
+      <div id="areaChart"></div>
+    </div>
+  </div>
+
+  <div class="chart-box" style="margin-bottom: 40px;">
+    <div id="candleChart"></div>
+  </div>
 
   <table id="resultTable" style="display:none;">
     <thead>
@@ -108,98 +108,121 @@
   </table>
 
   <button class="download-btn" onclick="downloadCSV()" id="downloadBtn" style="display:none;">Download CSV</button>
-  <div class="error-msg" id="errorMsg"></div>
-</div>
 
-<script>
-  const raw = localStorage.getItem("portfolioData");
-  const tableBody = document.getElementById("tableBody");
-  const resultTable = document.getElementById("resultTable");
-  const downloadBtn = document.getElementById("downloadBtn");
-  const errorMsg = document.getElementById("errorMsg");
+  <script>
+    const raw = localStorage.getItem("portfolioData");
+    const data = raw ? JSON.parse(raw) : null;
 
-  if (!raw) {
-    errorMsg.innerHTML = `No portfolio data found. <a href="portfolio.html">Click here to re-upload.</a>`;
-  } else {
-    try {
-      const data = JSON.parse(raw);
-      if (!Array.isArray(data) || data.length === 0) throw new Error("Invalid data format");
+    const tableBody = document.getElementById("tableBody");
+    const resultTable = document.getElementById("resultTable");
+    const downloadBtn = document.getElementById("downloadBtn");
 
+    if (!data || !data.table) {
+      document.body.innerHTML = "<h2 style='text-align:center;color:red;'>No portfolio data found. <a href='portfolio.html'>Upload here</a></h2>";
+    } else {
       resultTable.style.display = "table";
-      downloadBtn.style.display = "block";
+      downloadBtn.style.display = "inline-block";
 
-      data.forEach(row => {
-        const tr = document.createElement("tr");
-        const gain = parseFloat(row["Gain (%)"]);
-        const gainClass = gain >= 0 ? "positive" : "negative";
-
+      // Table Data
+      data.table.forEach(row => {
+        const tr = document.createElement('tr');
+        const gainClass = row["Gain (%)"] >= 0 ? 'positive' : 'negative';
         tr.innerHTML = `
           <td>${row["Stock Name"]}</td>
-          <td>${Number(row["Quantity"]).toLocaleString()}</td>
-          <td>${parseFloat(row["Buy Price"]).toFixed(2)}</td>
-          <td>${parseFloat(row["Current Price"]).toFixed(2)}</td>
-          <td class="${gainClass}">${gain.toFixed(2)}%</td>
+          <td>${row["Quantity"]}</td>
+          <td>${row["Buy Price"]}</td>
+          <td>${row["Current Price"]}</td>
+          <td class="${gainClass}">${row["Gain (%)"]}%</td>
         `;
         tableBody.appendChild(tr);
       });
 
-      // ==== CANDLESTICK EXAMPLE ====
-      const options = {
-        series: [{
-          data: [ // static sample candlesticks
-            { x: new Date(1538778600000), y: [6629.81, 6650.5, 6623.04, 6633.33] },
-            { x: new Date(1538780400000), y: [6632.01, 6643.59, 6620, 6630.11] },
-            { x: new Date(1538782200000), y: [6630.71, 6648.95, 6623.34, 6635.65] },
-            { x: new Date(1538784000000), y: [6635.65, 6651, 6629.67, 6638.24] },
-            { x: new Date(1538785800000), y: [6638.24, 6640, 6620, 6624.47] },
-            { x: new Date(1538787600000), y: [6624.53, 6636.03, 6621.68, 6624.31] }
-          ]
-        }],
+      // Pie Chart
+      new ApexCharts(document.querySelector("#pieChart"), {
         chart: {
-          type: 'candlestick',
-          height: 400
+          type: 'pie',
+          width: '100%',
+        },
+        labels: data.pie.map(p => p.label),
+        series: data.pie.map(p => p.value),
+        responsive: [{
+          breakpoint: 480,
+          options: {
+            chart: { width: 300 },
+            legend: { position: 'bottom' }
+          }
+        }]
+      }).render();
+
+      // Area Chart (Price Movement)
+      new ApexCharts(document.querySelector("#areaChart"), {
+        chart: {
+          type: 'area',
+          height: 350,
+          zoom: { type: 'x', enabled: true },
+          toolbar: { autoSelected: 'zoom' }
+        },
+        series: [{
+          name: 'Price Movement',
+          data: data.line
+        }],
+        dataLabels: { enabled: false },
+        markers: { size: 0 },
+        fill: {
+          type: 'gradient',
+          gradient: {
+            shadeIntensity: 1,
+            opacityFrom: 0.5,
+            opacityTo: 0,
+            stops: [0, 90, 100]
+          },
         },
         title: {
-          text: 'Sample Candlestick Chart',
+          text: 'Stock Price Movement',
+          align: 'left'
+        },
+        yaxis: {
+          title: { text: 'Price' }
+        },
+        xaxis: { type: 'datetime' }
+      }).render();
+
+      // Candlestick Chart
+      new ApexCharts(document.querySelector("#candleChart"), {
+        chart: {
+          type: 'candlestick',
+          height: 350
+        },
+        series: [{
+          data: data.candle
+        }],
+        title: {
+          text: 'Candlestick – Last 5 Days',
           align: 'left'
         },
         xaxis: {
           type: 'datetime'
         },
         yaxis: {
-          tooltip: {
-            enabled: true
-          }
+          tooltip: { enabled: true }
         }
-      };
-
-      const chart = new ApexCharts(document.querySelector("#chart"), options);
-      chart.render();
-
-    } catch (err) {
-      console.error("Portfolio render error:", err);
-      errorMsg.innerHTML = `Something went wrong. <a href="portfolio.html">Try again</a>.`;
+      }).render();
     }
-  }
 
-  function downloadCSV() {
-    const data = JSON.parse(localStorage.getItem("portfolioData") || "[]");
-    if (!data.length) return;
+    function downloadCSV() {
+      let csv = "Stock Name,Quantity,Buy Price,Current Price,Gain (%)\n";
+      data.table.forEach(row => {
+        csv += `${row["Stock Name"]},${row["Quantity"]},${row["Buy Price"]},${row["Current Price"]},${row["Gain (%)"]}\n`;
+      });
 
-    let csv = "Stock Name,Quantity,Buy Price,Current Price,Gain (%)\n";
-    data.forEach(row => {
-      csv += `${row["Stock Name"]},${row["Quantity"]},${row["Buy Price"]},${row["Current Price"]},${row["Gain (%)"]}\n`;
-    });
-
-    const blob = new Blob([csv], { type: "text/csv" });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement("a");
-    a.href = url;
-    a.download = "portfolio_analysis.csv";
-    a.click();
-    URL.revokeObjectURL(url);
-  }
-</script>
-
+      const blob = new Blob([csv], { type: 'text/csv' });
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = "portfolio_analysis.csv";
+      a.click();
+      window.URL.revokeObjectURL(url);
+    }
+  </script>
 </body>
 </html>
