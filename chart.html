@@ -3,9 +3,9 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Portfolio Analysis – Finoptix</title>
-  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600&display=swap" />
-  <script type="text/javascript" src="https://www.gstatic.com/charts/loader.js"></script>
+  <title>Portfolio Candlestick – Finoptix</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600&display=swap" rel="stylesheet">
+  <script src="https://cdn.jsdelivr.net/npm/apexcharts"></script>
   <style>
     body {
       margin: 0;
@@ -17,31 +17,21 @@
 
     .container {
       max-width: 1200px;
-      margin: 0 auto;
+      margin: auto;
     }
 
     h1 {
       font-size: 2rem;
-      margin-bottom: 30px;
       text-align: center;
+      margin-bottom: 30px;
     }
 
-    .charts {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 20px;
-      justify-content: center;
-      margin-bottom: 40px;
-    }
-
-    .chart-box {
-      flex: 1 1 500px;
-      min-width: 400px;
-      height: 400px;
+    #chart {
       background: #fff;
       border-radius: 12px;
       box-shadow: 0 8px 24px rgba(0, 0, 0, 0.06);
       padding: 20px;
+      margin-bottom: 40px;
     }
 
     table {
@@ -100,12 +90,9 @@
 <body>
 
 <div class="container">
-  <h1>Your Portfolio Performance</h1>
+  <h1>Your Portfolio Candlestick Chart</h1>
 
-  <div class="charts">
-    <div id="piechart" class="chart-box"></div>
-    <div id="barchart" class="chart-box"></div>
-  </div>
+  <div id="chart"></div>
 
   <table id="resultTable" style="display:none;">
     <thead>
@@ -124,90 +111,76 @@
   <div class="error-msg" id="errorMsg"></div>
 </div>
 
-<script type="text/javascript">
+<script>
   const raw = localStorage.getItem("portfolioData");
   const tableBody = document.getElementById("tableBody");
   const resultTable = document.getElementById("resultTable");
   const downloadBtn = document.getElementById("downloadBtn");
   const errorMsg = document.getElementById("errorMsg");
 
-  google.charts.load('current', { packages: ['corechart'] });
-  google.charts.setOnLoadCallback(() => {
-    if (!raw) {
-      errorMsg.innerHTML = `No portfolio data found. <a href="portfolio.html">Click here to re-upload.</a>`;
-      return;
-    }
-
-    let data;
+  if (!raw) {
+    errorMsg.innerHTML = `No portfolio data found. <a href="portfolio.html">Click here to re-upload.</a>`;
+  } else {
     try {
-      data = JSON.parse(raw);
-      if (!Array.isArray(data) || data.length === 0) {
-        throw new Error("Invalid data format");
-      }
+      const data = JSON.parse(raw);
+      if (!Array.isArray(data) || data.length === 0) throw new Error("Invalid data format");
+
+      resultTable.style.display = "table";
+      downloadBtn.style.display = "block";
+
+      data.forEach(row => {
+        const tr = document.createElement("tr");
+        const gain = parseFloat(row["Gain (%)"]);
+        const gainClass = gain >= 0 ? "positive" : "negative";
+
+        tr.innerHTML = `
+          <td>${row["Stock Name"]}</td>
+          <td>${Number(row["Quantity"]).toLocaleString()}</td>
+          <td>${parseFloat(row["Buy Price"]).toFixed(2)}</td>
+          <td>${parseFloat(row["Current Price"]).toFixed(2)}</td>
+          <td class="${gainClass}">${gain.toFixed(2)}%</td>
+        `;
+        tableBody.appendChild(tr);
+      });
+
+      // ==== CANDLESTICK EXAMPLE ====
+      const options = {
+        series: [{
+          data: [ // static sample candlesticks
+            { x: new Date(1538778600000), y: [6629.81, 6650.5, 6623.04, 6633.33] },
+            { x: new Date(1538780400000), y: [6632.01, 6643.59, 6620, 6630.11] },
+            { x: new Date(1538782200000), y: [6630.71, 6648.95, 6623.34, 6635.65] },
+            { x: new Date(1538784000000), y: [6635.65, 6651, 6629.67, 6638.24] },
+            { x: new Date(1538785800000), y: [6638.24, 6640, 6620, 6624.47] },
+            { x: new Date(1538787600000), y: [6624.53, 6636.03, 6621.68, 6624.31] }
+          ]
+        }],
+        chart: {
+          type: 'candlestick',
+          height: 400
+        },
+        title: {
+          text: 'Sample Candlestick Chart',
+          align: 'left'
+        },
+        xaxis: {
+          type: 'datetime'
+        },
+        yaxis: {
+          tooltip: {
+            enabled: true
+          }
+        }
+      };
+
+      const chart = new ApexCharts(document.querySelector("#chart"), options);
+      chart.render();
+
     } catch (err) {
-      console.error("Error parsing data:", err);
+      console.error("Portfolio render error:", err);
       errorMsg.innerHTML = `Something went wrong. <a href="portfolio.html">Try again</a>.`;
-      return;
     }
-
-    resultTable.style.display = "table";
-    downloadBtn.style.display = "block";
-
-    data.forEach(row => {
-      const tr = document.createElement("tr");
-      const gain = parseFloat(row["Gain (%)"]);
-      const gainClass = gain >= 0 ? "positive" : "negative";
-
-      tr.innerHTML = `
-        <td>${row["Stock Name"]}</td>
-        <td>${Number(row["Quantity"]).toLocaleString()}</td>
-        <td>${row["Buy Price"].toFixed(2)}</td>
-        <td>${row["Current Price"].toFixed(2)}</td>
-        <td class="${gainClass}">${gain.toFixed(2)}%</td>
-      `;
-      tableBody.appendChild(tr);
-    });
-
-    // Pie Chart Data
-    const pieData = [["Stock", "Value"]];
-    data.forEach(d => {
-      pieData.push([d["Stock Name"], d["Quantity"] * d["Current Price"]]);
-    });
-
-    // Bar Chart Data
-    const barData = [["Stock", "Buy Price", "Current Price"]];
-    data.forEach(d => {
-      barData.push([d["Stock Name"], d["Buy Price"], d["Current Price"]]);
-    });
-
-    const pieOptions = {
-      title: "Portfolio Allocation",
-      pieHole: 0.35,
-      fontName: "Inter",
-      chartArea: { width: "90%", height: "80%" },
-      colors: ["#4e79a7", "#f28e2c", "#e15759", "#76b7b2", "#59a14f", "#edc948"]
-    };
-
-    const barOptions = {
-      title: "Buy vs Current Price per Stock",
-      fontName: "Inter",
-      chartArea: { width: "80%", height: "70%" },
-      hAxis: { title: "Stock" },
-      vAxis: { title: "Price (INR)" },
-      legend: { position: "top" },
-      colors: ["#2563eb", "#f97316"]
-    };
-
-    new google.visualization.PieChart(document.getElementById("piechart")).draw(
-      google.visualization.arrayToDataTable(pieData),
-      pieOptions
-    );
-
-    new google.visualization.ColumnChart(document.getElementById("barchart")).draw(
-      google.visualization.arrayToDataTable(barData),
-      barOptions
-    );
-  });
+  }
 
   function downloadCSV() {
     const data = JSON.parse(localStorage.getItem("portfolioData") || "[]");
@@ -227,5 +200,6 @@
     URL.revokeObjectURL(url);
   }
 </script>
+
 </body>
 </html>
