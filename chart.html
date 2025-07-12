@@ -3,313 +3,229 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Finoptix – Portfolio Dashboard</title>
+  <title>Portfolio Analysis – Finoptix</title>
   <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600&display=swap" />
-  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <script type="text/javascript" src="https://www.gstatic.com/charts/loader.js"></script>
   <style>
     body {
       margin: 0;
-      padding: 0;
       font-family: 'Inter', sans-serif;
-      background: #f3f4f6;
-      color: #1f2937;
+      background-color: #f9fafb;
+      padding: 30px;
+      color: #1b1f36;
     }
 
     .container {
-      max-width: 1300px;
+      max-width: 1200px;
       margin: 0 auto;
-      padding: 40px 20px;
     }
 
     h1 {
+      font-size: 2rem;
+      margin-bottom: 30px;
       text-align: center;
-      font-size: 2.5rem;
-      color: #2d60ff;
-      margin-bottom: 32px;
     }
 
-    .summary-box {
+    .charts {
       display: flex;
-      justify-content: space-between;
-      background: #ffffff;
-      border-radius: 12px;
-      padding: 24px 32px;
-      box-shadow: 0 6px 20px rgba(0, 0, 0, 0.06);
+      flex-wrap: wrap;
+      gap: 20px;
+      justify-content: center;
       margin-bottom: 40px;
     }
 
-    .summary-box div {
-      flex: 1;
-      text-align: center;
-    }
-
-    .summary-label {
-      font-size: 1rem;
-      color: #6b7280;
-    }
-
-    .summary-value {
-      font-size: 1.6rem;
-      font-weight: 700;
-      color: #111827;
-    }
-
-    .charts-grid {
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 30px;
-      margin-bottom: 50px;
-    }
-
-    .chart-card {
-      background: #ffffff;
+    .chart-box {
+      flex: 1 1 500px;
+      min-width: 400px;
+      height: 400px;
+      background: #fff;
+      border-radius: 12px;
+      box-shadow: 0 8px 24px rgba(0, 0, 0, 0.06);
       padding: 20px;
-      border-radius: 16px;
-      box-shadow: 0 6px 18px rgba(0, 0, 0, 0.05);
-      display: flex;
-      align-items: center;
-      justify-content: center;
-    }
-
-    .chart-card canvas {
-      width: 100% !important;
-      height: 420px !important;
-    }
-
-    .line-chart-wrapper {
-      background: #ffffff;
-      border-radius: 16px;
-      padding: 24px;
-      box-shadow: 0 6px 18px rgba(0, 0, 0, 0.05);
-      margin-bottom: 50px;
     }
 
     table {
       width: 100%;
-      background: #ffffff;
       border-collapse: collapse;
-      border-radius: 16px;
-      overflow: hidden;
-      box-shadow: 0 6px 18px rgba(0, 0, 0, 0.05);
+      background: #fff;
+      margin-top: 20px;
+      box-shadow: 0 8px 24px rgba(0, 0, 0, 0.04);
     }
 
     th, td {
-      padding: 16px 12px;
-      border-bottom: 1px solid #e5e7eb;
-      text-align: center;
-      font-size: 0.96rem;
+      padding: 14px;
+      border: 1px solid #e5e7eb;
+      font-size: 0.95rem;
     }
 
     th {
-      background-color: #eef4ff;
-      font-weight: 600;
-      color: #1e3a8a;
-    }
-
-    td.positive {
-      color: #16a34a;
+      background-color: #f3f4f6;
       font-weight: 600;
     }
 
-    td.negative {
-      color: #dc2626;
-      font-weight: 600;
+    td.positive { color: green; font-weight: 600; }
+    td.negative { color: red; font-weight: 600; }
+
+    .download-btn {
+      display: block;
+      margin: 30px auto 0;
+      background-color: #2563eb;
+      color: white;
+      padding: 14px 24px;
+      font-size: 1rem;
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+      transition: background-color 0.3s ease;
     }
 
-    @media (max-width: 900px) {
-      .charts-grid {
-        grid-template-columns: 1fr;
-      }
+    .download-btn:hover {
+      background-color: #1e40af;
+    }
 
-      .summary-box {
-        flex-direction: column;
-        gap: 20px;
-      }
+    .error-msg {
+      color: red;
+      font-size: 1rem;
+      text-align: center;
+      margin-top: 20px;
+    }
+
+    .error-msg a {
+      color: #2563eb;
+      text-decoration: none;
+      font-weight: 500;
     }
   </style>
 </head>
 <body>
-  <div class="container">
-    <h1>Finoptix Portfolio Dashboard</h1>
 
-    <div class="summary-box">
-      <div>
-        <div class="summary-label">Invested</div>
-        <div class="summary-value" id="totalInvested">₹0</div>
-      </div>
-      <div>
-        <div class="summary-label">Current Value</div>
-        <div class="summary-value" id="currentValue">₹0</div>
-      </div>
-      <div>
-        <div class="summary-label">Net Gain/Loss</div>
-        <div class="summary-value" id="netGain">₹0</div>
-      </div>
-    </div>
+<div class="container">
+  <h1>Your Portfolio Performance</h1>
 
-    <div class="charts-grid">
-      <div class="chart-card">
-        <canvas id="pieChart"></canvas>
-      </div>
-      <div class="chart-card">
-        <canvas id="barChart"></canvas>
-      </div>
-    </div>
-
-    <div class="line-chart-wrapper">
-      <canvas id="lineChart"></canvas>
-    </div>
-
-    <table>
-      <thead>
-        <tr>
-          <th>Stock Name</th>
-          <th>Quantity</th>
-          <th>Buy Price</th>
-          <th>Current Price</th>
-          <th>Gain (%)</th>
-        </tr>
-      </thead>
-      <tbody id="tableBody"></tbody>
-    </table>
+  <div class="charts">
+    <div id="piechart" class="chart-box"></div>
+    <div id="barchart" class="chart-box"></div>
   </div>
 
-  <script>
-    let rawData = JSON.parse(localStorage.getItem("portfolioData") || "[]");
+  <table id="resultTable" style="display:none;">
+    <thead>
+      <tr>
+        <th>Stock Name</th>
+        <th>Quantity</th>
+        <th>Buy Price</th>
+        <th>Current Price</th>
+        <th>Gain (%)</th>
+      </tr>
+    </thead>
+    <tbody id="tableBody"></tbody>
+  </table>
 
-    const pieCtx = document.getElementById("pieChart").getContext("2d");
-    const barCtx = document.getElementById("barChart").getContext("2d");
-    const lineCtx = document.getElementById("lineChart").getContext("2d");
+  <button class="download-btn" onclick="downloadCSV()" id="downloadBtn" style="display:none;">Download CSV</button>
+  <div class="error-msg" id="errorMsg"></div>
+</div>
 
-    const pieChart = new Chart(pieCtx, {
-      type: "pie",
-      data: { labels: [], datasets: [{ data: [], backgroundColor: [] }] },
-      options: {
-        plugins: {
-          title: { display: true, text: "Portfolio Allocation" },
-          legend: { position: "bottom" }
-        }
+<script type="text/javascript">
+  const raw = localStorage.getItem("portfolioData");
+  const tableBody = document.getElementById("tableBody");
+  const resultTable = document.getElementById("resultTable");
+  const downloadBtn = document.getElementById("downloadBtn");
+  const errorMsg = document.getElementById("errorMsg");
+
+  google.charts.load('current', { packages: ['corechart'] });
+  google.charts.setOnLoadCallback(() => {
+    if (!raw) {
+      errorMsg.innerHTML = `No portfolio data found. <a href="portfolio.html">Click here to re-upload.</a>`;
+      return;
+    }
+
+    let data;
+    try {
+      data = JSON.parse(raw);
+      if (!Array.isArray(data) || data.length === 0) {
+        throw new Error("Invalid data format");
       }
+    } catch (err) {
+      console.error("Error parsing data:", err);
+      errorMsg.innerHTML = `Something went wrong. <a href="portfolio.html">Try again</a>.`;
+      return;
+    }
+
+    resultTable.style.display = "table";
+    downloadBtn.style.display = "block";
+
+    data.forEach(row => {
+      const tr = document.createElement("tr");
+      const gain = parseFloat(row["Gain (%)"]);
+      const gainClass = gain >= 0 ? "positive" : "negative";
+
+      tr.innerHTML = `
+        <td>${row["Stock Name"]}</td>
+        <td>${Number(row["Quantity"]).toLocaleString()}</td>
+        <td>${row["Buy Price"].toFixed(2)}</td>
+        <td>${row["Current Price"].toFixed(2)}</td>
+        <td class="${gainClass}">${gain.toFixed(2)}%</td>
+      `;
+      tableBody.appendChild(tr);
     });
 
-    const barChart = new Chart(barCtx, {
-      type: "bar",
-      data: {
-        labels: [],
-        datasets: [{
-          label: "Gain/Loss (%)",
-          data: [],
-          backgroundColor: [],
-        }]
-      },
-      options: {
-        plugins: {
-          title: { display: true, text: "Stock Gain/Loss %" },
-          legend: { display: false }
-        },
-        scales: {
-          y: { beginAtZero: true }
-        }
-      }
+    // Pie Chart Data
+    const pieData = [["Stock", "Value"]];
+    data.forEach(d => {
+      pieData.push([d["Stock Name"], d["Quantity"] * d["Current Price"]]);
     });
 
-    const lineChart = new Chart(lineCtx, {
-      type: "line",
-      data: { labels: [], datasets: [] },
-      options: {
-        responsive: true,
-        plugins: {
-          title: {
-            display: true,
-            text: "Live Price Movement (Simulated)"
-          },
-          legend: {
-            position: 'bottom'
-          }
-        }
-      }
+    // Bar Chart Data
+    const barData = [["Stock", "Buy Price", "Current Price"]];
+    data.forEach(d => {
+      barData.push([d["Stock Name"], d["Buy Price"], d["Current Price"]]);
     });
 
-    function updateSummary(data) {
-      let invested = 0, current = 0;
-      data.forEach(s => {
-        invested += s["Quantity"] * s["Buy Price"];
-        current += s["Quantity"] * s["Current Price"];
-      });
-      let net = current - invested;
-      document.getElementById("totalInvested").innerText = "₹" + invested.toFixed(2);
-      document.getElementById("currentValue").innerText = "₹" + current.toFixed(2);
-      document.getElementById("netGain").innerText = (net >= 0 ? "₹" : "–₹") + Math.abs(net).toFixed(2);
-    }
+    const pieOptions = {
+      title: "Portfolio Allocation",
+      pieHole: 0.35,
+      fontName: "Inter",
+      chartArea: { width: "90%", height: "80%" },
+      colors: ["#4e79a7", "#f28e2c", "#e15759", "#76b7b2", "#59a14f", "#edc948"]
+    };
 
-    function updateTable(data) {
-      const body = document.getElementById("tableBody");
-      body.innerHTML = "";
-      data.forEach(stock => {
-        const gainClass = stock["Gain (%)"] >= 0 ? "positive" : "negative";
-        body.innerHTML += `
-          <tr>
-            <td>${stock["Stock Name"]}</td>
-            <td>${stock["Quantity"]}</td>
-            <td>${stock["Buy Price"]}</td>
-            <td>${stock["Current Price"]}</td>
-            <td class="${gainClass}">${stock["Gain (%)"]}%</td>
-          </tr>
-        `;
-      });
-    }
+    const barOptions = {
+      title: "Buy vs Current Price per Stock",
+      fontName: "Inter",
+      chartArea: { width: "80%", height: "70%" },
+      hAxis: { title: "Stock" },
+      vAxis: { title: "Price (INR)" },
+      legend: { position: "top" },
+      colors: ["#2563eb", "#f97316"]
+    };
 
-    async function fetchLiveData() {
-      const res = await fetch("/api/data", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(rawData)
-      });
-      const updated = await res.json();
-      rawData = updated;
-      localStorage.setItem("portfolioData", JSON.stringify(updated));
-      renderAll(updated);
-    }
+    new google.visualization.PieChart(document.getElementById("piechart")).draw(
+      google.visualization.arrayToDataTable(pieData),
+      pieOptions
+    );
 
-    function renderAll(data) {
-      const labels = data.map(s => s["Stock Name"]);
-      const values = data.map(s => s["Quantity"] * s["Current Price"]);
-      const gains = data.map(s => s["Gain (%)"]);
-      const colors = labels.map((_, i) => `hsl(${i * 40 % 360}, 70%, 70%)`);
+    new google.visualization.ColumnChart(document.getElementById("barchart")).draw(
+      google.visualization.arrayToDataTable(barData),
+      barOptions
+    );
+  });
 
-      pieChart.data.labels = labels;
-      pieChart.data.datasets[0].data = values;
-      pieChart.data.datasets[0].backgroundColor = colors;
-      pieChart.update();
+  function downloadCSV() {
+    const data = JSON.parse(localStorage.getItem("portfolioData") || "[]");
+    if (!data.length) return;
 
-      barChart.data.labels = labels;
-      barChart.data.datasets[0].data = gains;
-      barChart.data.datasets[0].backgroundColor = colors;
-      barChart.update();
+    let csv = "Stock Name,Quantity,Buy Price,Current Price,Gain (%)\n";
+    data.forEach(row => {
+      csv += `${row["Stock Name"]},${row["Quantity"]},${row["Buy Price"]},${row["Current Price"]},${row["Gain (%)"]}\n`;
+    });
 
-      const now = new Date();
-      const timeLabels = Array.from({ length: 6 }, (_, i) =>
-        new Date(now.getTime() - (5 - i) * 60000).toLocaleTimeString()
-      );
-
-      lineChart.data.labels = timeLabels;
-      lineChart.data.datasets = data.slice(0, 3).map((s, i) => ({
-        label: s["Stock Name"],
-        data: Array.from({ length: 6 }, () =>
-          (s["Current Price"] * (1 + Math.random() * 0.01 - 0.005)).toFixed(2)
-        ),
-        borderColor: `hsl(${i * 90}, 70%, 40%)`,
-        fill: false,
-        tension: 0.4
-      }));
-      lineChart.update();
-
-      updateSummary(data);
-      updateTable(data);
-    }
-
-    renderAll(rawData);
-    setInterval(fetchLiveData, 60000);
-  </script>
+    const blob = new Blob([csv], { type: "text/csv" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = "portfolio_analysis.csv";
+    a.click();
+    URL.revokeObjectURL(url);
+  }
+</script>
 </body>
 </html>
