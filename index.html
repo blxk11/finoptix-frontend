@@ -2,80 +2,106 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Finoptix – Master Your Money</title>
   <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600&display=swap" />
   <style>
     body {
       margin: 0;
       font-family: 'Inter', sans-serif;
-      background-color: #f9fafb;
-      color: #1b1f36;
+      background-color: #f5f7fb;
       display: flex;
-      flex-direction: column;
+      justify-content: center;
       align-items: center;
-      padding: 60px 20px;
+      height: 100vh;
+      text-align: center;
+      color: #1b1f36;
+    }
+
+    .container {
+      padding: 30px;
     }
 
     h1 {
       font-size: 2.4rem;
-      margin-bottom: 10px;
+      margin-bottom: 20px;
     }
 
     p {
-      font-size: 1.2rem;
-      margin-bottom: 30px;
-      text-align: center;
-      max-width: 600px;
-    }
-
-    .btn-group {
-      display: flex;
-      flex-direction: column;
-      gap: 16px;
-    }
-
-    .btn {
-      padding: 14px 24px;
-      background-color: #2563eb;
-      color: white;
-      border: none;
-      border-radius: 8px;
       font-size: 1.1rem;
-      cursor: pointer;
-      text-align: center;
-      transition: background-color 0.3s ease;
+      color: #5f6c7b;
+    }
+
+    .buttons {
+      margin-top: 30px;
+    }
+
+    .buttons a {
       text-decoration: none;
+      color: white;
+      background-color: #2d60ff;
+      padding: 14px 24px;
+      margin: 0 10px;
+      border-radius: 8px;
+      font-weight: 600;
+      transition: background 0.3s ease;
     }
 
-    .btn:hover {
-      background-color: #1e40af;
+    .buttons a:hover {
+      background-color: #244edf;
     }
 
-    @media (min-width: 600px) {
-      .btn-group {
-        flex-direction: row;
-      }
+    #resume {
+      margin-top: 30px;
+      font-size: 1rem;
+      color: #10b981;
+      font-weight: 600;
+    }
+
+    #clearSaved {
+      margin-top: 16px;
+      font-size: 0.9rem;
+      color: #ef4444;
+      cursor: pointer;
+      text-decoration: underline;
     }
   </style>
+
+  <!-- ✅ Google Analytics Tag -->
+  <script async src="https://www.googletagmanager.com/gtag/js?id=G-MT22VPGPSB"></script>
+  <script>
+    window.dataLayer = window.dataLayer || [];
+    function gtag(){dataLayer.push(arguments);}
+    gtag('js', new Date());
+    gtag('config', 'G-MT22VPGPSB');
+  </script>
 </head>
 <body>
+  <div class="container">
+    <h1>📈 Welcome to Finoptix</h1>
+    <p>Upload your portfolio and get a full breakdown of your investment performance.</p>
 
-  <h1>💼 Welcome to Finoptix</h1>
-  <p>Upload and visualize your portfolio across stocks and mutual funds — all in one clean dashboard.</p>
+    <div class="buttons">
+      <a href="portfolio.html">Upload Portfolio</a>
+      <a href="chart.html">View Charts</a>
+    </div>
 
-  <div class="btn-group">
-    <a class="btn" href="portfolio.html">Upload Portfolio</a>
-    <a class="btn" href="chart.html">View Analysis</a>
-    <a class="btn" href="chart.html" id="savedPortfolioBtn" style="display:none;">View Saved Portfolio</a>
+    <div id="resume" style="display: none;">🔄 You have a saved portfolio</div>
+    <div id="clearSaved" style="display: none;" onclick="clearSaved()">Remove saved portfolio</div>
   </div>
 
   <script>
-    const hasSaved = localStorage.getItem("hasSavedPortfolio");
-    if (hasSaved) {
-      document.getElementById("savedPortfolioBtn").style.display = "inline-block";
+    const saved = localStorage.getItem("savedPortfolio");
+    if (saved) {
+      document.getElementById("resume").style.display = "block";
+      document.getElementById("clearSaved").style.display = "block";
+    }
+
+    function clearSaved() {
+      localStorage.removeItem("savedPortfolio");
+      alert("Saved portfolio removed.");
+      location.reload();
     }
   </script>
-
 </body>
 </html>
